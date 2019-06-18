@@ -1,0 +1,15 @@
+{
+  "name": "torrent-rss-feed-auto-downloader",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "node index.js",
+    "delete": "rm -r ./storage;rm -r ./torrents"
+  },
+  "dependencies": {
+    "download-file": "^0.1.5",
+    "node-persist": "^3.0.4",
+    "rss-to-json": "^1.0.4"
+  }
+}
