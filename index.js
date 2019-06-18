@@ -5,7 +5,7 @@ const storage = require('node-persist');
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 
-const RSS_FEED = 'https://03k03.mrd.ninja/rss/08278b1d';
+const RSS_FEED = 'https://example.com/your/rss/feed/';
 const RUN_SCRIPT_EVERY_X_MINUTE = 60;
 const TORRENTS_PER_DAY = 20;
 const TORRENT_DOWNLOAD_LOCATION = "/home/pi/Downloads/torrents/auto";
