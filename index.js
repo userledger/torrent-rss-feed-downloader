@@ -4,10 +4,14 @@ const fs = require('fs');
 const storage = require('node-persist');
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
+const crypto = require('crypto');
 
-const RSS_FEED = 'https://03k03.mrd.ninja/rss/08278b1d';
-const RUN_SCRIPT_EVERY_X_MINUTE = 60;
-const TORRENTS_PER_DAY = 20;
+
+const RSS_FEED = 'https://rss.feed';
+const RUN_SCRIPT_EVERY_X_MINUTE = 0.5;
+const TORRENTS_PER_DAY = 15;
+const DOWNLOAD_X_TORRENTS_PER_CYCLE = false;//Set this to false to iterate every torrent from feed
+                                            //You can set it to n to check only latest n torrents from feed if you are refreshing feed constantly
 const TORRENT_DOWNLOAD_LOCATION = "/home/pi/Downloads/torrents/auto";
 
 let options = {
@@ -39,11 +43,13 @@ let checkForDownload = (_file)=>{
 let torrentFileDownloader = (fileLocation,_link)=>{
     return new Promise(function(resolve, reject) {
         if (!fs.existsSync(fileLocation)) {
-            console.info("DOWNLOAD torrent file:",fileLocation)
+            console.info("DOWNLOAD torrent file:",fileLocation);
             download(_link, options, function(err){
-                if (err) throw err;
+                if (err) reject();
                 resolve();
             })
+        }else {
+            reject();
         }
     });
 };
@@ -65,13 +71,22 @@ let initialize = async ()=>{
 let readRssFeed = ()=>{
     console.info(`Reading feed: ${RSS_FEED}`);
     Feed.load(RSS_FEED, async function(err, rss){
-        for(let i=0;i<rss.items.length;i++){
+
+        for(let i=0;i<(DOWNLOAD_X_TORRENTS_PER_CYCLE===false?rss.items.length:DOWNLOAD_X_TORRENTS_PER_CYCLE);i++){
+            console.info({title:rss.items[i].title,created:rss.items[i].created});
             let _link = rss.items[i].link;
-            let filename = rss.items[i].title+".torrent";
+
+            let filename = `${crypto.createHash('md5').update(rss.items[i].title).digest("hex")}.torrent`;
             options = {...options,...{filename}};
             let fileLocation = `${options.directory}/${filename}`;
-            await torrentFileDownloader(fileLocation,_link);
-            await checkForDownload(fileLocation);
+            try{
+                await torrentFileDownloader(fileLocation,_link);
+                await checkForDownload(fileLocation);
+            }catch (e) {
+                console.info("Already have .torrent file");
+            }
+
+
         }
     });
 };
